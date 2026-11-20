@@ -1,0 +1,51 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: laravel_estudiantes_app
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/var/www/html
+      - /var/www/html/vendor
+    environment:
+      - DB_CONNECTION=mysql
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_DATABASE=estudiantes_db
+      - DB_USERNAME=laravel_user
+      - DB_PASSWORD=secret_password
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - estudiantes_net
+
+  db:
+    image: mysql:8.0
+    container_name: laravel_estudiantes_db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: estudiantes_db
+      MYSQL_USER: laravel_user
+      MYSQL_PASSWORD: secret_password
+      MYSQL_ROOT_PASSWORD: root_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_password"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - estudiantes_net
+
+volumes:
+  db_data:
+
+networks:
+  estudiantes_net:
+    driver: bridge
